@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         sketchfab
+// @name         sketchrip
 // @version      0.1
-// @description  download sketchfab models
-// @author       tianye
+// @description  rip sketchfab models
+// @author       1337ad
 // @include      /^https?://(www\.)?sketchfab\.com/.*
 // @run-at       document-start
 // @grant        unsafeWindow
@@ -151,10 +151,13 @@
         SpecularPBR: "map_Ks",
         SpecularColor: "map_Ks",
         GlossinessPBR: "map_Pm",
-        NormalMap : "map_bump",
+        NormalMap : "map_Bump",
         EmitColor : "map_Ke",
         AlphaMask : "map_d",
-        Opacity : "map_o"
+        Opacity : "map_o",
+        AlbedoPBR : "map_Kd",
+        RoughnessPBR : "map_Ns",
+        MetalnessPBR : "map_Ks"
     };
 
     var parsetex = function(obj) {
@@ -198,13 +201,15 @@
     var dodownload = function() {
         console.log("[UserScript]download");
         window.allmodel.forEach(function(obj) {
-            var mdl = {
-                name: obj._name,
-                obj:parseobj(obj),
-                tex:parsetex(obj),
+            if (obj) {
+                var mdl = {
+                    name: obj._name ?? obj._geometry._instanceID,
+                    obj:parseobj(obj),
+                    tex:parsetex(obj),
+                }
+                console.log(mdl);
+                dosavefile(mdl);
             }
-            console.log(mdl);
-            dosavefile(mdl);
         })
     }
 
@@ -223,12 +228,11 @@
         }
     }
 
-
-    var regpattern = /(drawImplementation:\s*function\([^\(\{]*\{)[^\{\}]*getInstanceID/;
+    var regpattern = /(this\._stateCache\.drawGeometry\(this\._graphicContext,e\))/;
 
     window.allmodel = [];
     window.drawhook = function(obj) {
-        if(obj._faked != true) {
+        if(obj && obj._faked != true) {
             obj._faked = true;
             window.allmodel.push(obj)
             console.log(obj);
@@ -250,15 +254,13 @@
             var req = new XMLHttpRequest();
             req.open('GET', src, false);
             req.send('');
-
             var jstext = req.responseText;
-
             var ret = regpattern.exec(jstext);
             if (ret) {
                 var index = ret.index + ret[1].length;
                 var head = jstext.slice(0, index);
                 var tail = jstext.slice(index);
-                jstext = head + "window.drawhook(this);" + tail;
+                jstext = head + ";window.drawhook(e);" + tail;
                 console.log("[UserScript]Injection: patched " + src);
                 setTimeout(addbtnfunc, 3000);
             }
@@ -274,4 +276,3 @@
         };
     }, true);
 })();
-
