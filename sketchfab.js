@@ -201,9 +201,9 @@
     var dodownload = function() {
         console.log("[UserScript]download");
         window.allmodel.forEach(function(obj) {
-            if (obj) {
+            if (obj ) {
                 var mdl = {
-                    name: obj._name ?? obj._geometry._instanceID,
+                    name: obj._name ?? "unknow_"+ obj._instanceID,
                     obj:parseobj(obj),
                     tex:parsetex(obj),
                 }
@@ -228,6 +228,8 @@
         }
     }
 
+
+    var regpatternold = /(drawGeometry:\s*function\([^\(\{]*\{)[^]*getInstanceID/;
     var regpattern = /(this\._stateCache\.drawGeometry\(this\._graphicContext,e\))/;
 
     window.allmodel = [];
